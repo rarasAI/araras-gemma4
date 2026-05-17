@@ -1,6 +1,7 @@
 # Araras-Gemma4 — open Gemma 4 fine-tune for Brazilian rare-disease care
 
 [![Model](https://img.shields.io/badge/🤗-Raras--AI%2Fararas--gemma4--e4b--v4-blue)](https://huggingface.co/Raras-AI/araras-gemma4-e4b-v4-gguf)
+[![Demo](https://img.shields.io/badge/🤗-Live%20Demo-yellow)](https://huggingface.co/spaces/Raras-AI/araras-gemma4-demo)
 [![Benchmark](https://img.shields.io/badge/RareBench--BR-1,605%20cases-green)](https://github.com/rarasAI/rarebench-br)
 [![License](https://img.shields.io/badge/license-Gemma%2BApache--2.0-orange)](#license)
 
