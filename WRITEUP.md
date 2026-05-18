@@ -28,17 +28,31 @@ Evaluated on the **full RareBench-BR_SUS unified benchmark (833 cases, all layer
 
 **Nothing else in the open ecosystem predicts Brazilian SUS conduta this accurately at 4B parameters, because nothing else was trained on SUS-grounded data.**
 
-## Why raras.org trained a Gemma 4
+## Why Raras trained a Gemma 4
 
-In **under six months** we built Latin America's largest rare-disease data + intelligence infrastructure: 100k+ monthly visits, 3k+ registered patients (encrypted "Carteira do Paciente"), **10,000+ rare diseases** in a Neo4j knowledge graph enriched from 17 sources (Orphanet, OMIM, HPO, ClinGen, gnomAD, MedGen, MONDO, PrimeKG, PubMed, gov.br/conitec PCDTs, CEAF Portarias, CNES), 18+ rare-disease associations on the platform, strategic partnerships with **HC-FMUSP** (largest rare-disease reference center in Brazil) and **Wikipedia PT-BR**.
+[**Raras**](https://raras.org) is Latin America's largest rare-disease data + AI infrastructure. In **under six months**, starting from zero, we built:
 
-All of that intelligence ran as a web product — browser, login, stable internet, clinician at a desk with free time. **But the Brazilian diagnostic odyssey doesn't happen in a browser.** It happens in 5-10 minute UBS consultations where the doctor can't open 4 tabs, log in to a MS portal, download a PCDT PDF, cross-reference CEAF lists. And where, in half the country, 4G is slow or absent. The knowledge we accumulated stayed trapped in the web product.
+- **100,000+ monthly visits** organically (no paid acquisition)
+- **3,000+ registered patients** with **"Carteira do Paciente"** — an encrypted digital health record using AES-256-GCM for medical documents and CPF crypto with key versioning (HIPAA + LGPD compliant)
+- **10,468 rare diseases** mapped in a Neo4j knowledge graph, enriched from **17 sources**: Orphanet, OMIM, HPO, ClinGen, gnomAD, MedGen, MONDO, PrimeKG, PubMed, gov.br/conitec PCDTs, CEAF Portarias, CNES, RaraConnect, ORDO, GenReviews, ClinicalTrials.gov, plus our own curation
+- **18+ rare-disease patient associations** on the platform — each with their own community, content, and member registry
+- **Strategic partnership with HC-FMUSP** (Hospital das Clínicas da Faculdade de Medicina da USP — Brazil's largest rare-disease reference center)
+- **Strategic partnership with Wikipedia PT-BR** for evidence-grounded disease pages
+- Multi-modal **copilot** in production (DeepSeek + Vertex Gemini) handling patient + clinician queries, integrated with the Carteira data
 
-**Araras-Gemma4 is the distillation of that infrastructure into a 4B-parameter model that runs on a phone, offline, during the consultation.** The brain of raras.org leaves the cloud and goes to the pocket of the healthcare professional. Pre-Gemma 4 copilot was DeepSeek + Vertex Gemini (cloud, English-centric, useless in airplane mode).
+The platform is the only place in Brazil where a rare-disease patient can: maintain an encrypted longitudinal record (laudos, exams, medications), find their disease's official PCDT and CEAF dispensation list, see verified reference centers and ongoing clinical trials, connect to a patient association for their condition, and ask an AI copilot real questions about their case.
+
+All of that ran as a web product — browser, login, stable internet, clinician at a desk with free time. **But the Brazilian diagnostic odyssey doesn't happen in a browser.** It happens in 5-10 minute UBS consultations where the doctor can't open 4 tabs, log in to an MS portal, download a PCDT PDF, cross-reference CEAF lists. And where, in half the country, 4G is slow or absent. The knowledge stayed trapped in the web product.
+
+**Araras-Gemma4 is the distillation of that infrastructure into a 4B-parameter model that runs on a phone, offline, during the consultation.** The brain of Raras leaves the cloud and goes to the pocket of the healthcare professional.
 
 ## The 20-year problem is a healthcare-workforce problem
 
-I'm a rare disease patient — twenty years to diagnosis, seven doctors, five hospitals. None of them was incompetent; they were time-starved generalists facing 10,000+ rare diseases that medical school barely mentions. Brazil's average diagnostic odyssey is **5-7 years**. Most patients enter via UBS (primary care). [BMC](https://link.springer.com/article/10.1186/s12875-024-02553-8) shows rural UBS doctors are mostly recent graduates with no integrated information system. [Casa dos Raros](https://pmc.ncbi.nlm.nih.gov/articles/PMC12321710/) validated that the right intervention target is **the local clinician**, not the patient.
+My name is **Dimas Timmers**. I'm a rare-disease patient — **distonia mioclônica (ORPHA:36899)**, diagnosed at 27 after a 20-year odyssey across seven doctors and five hospitals. The first specialist saw me at age 7; the diagnosis arrived two decades later. None of those seven doctors was incompetent — they were time-starved generalists facing 10,000+ rare diseases that medical school barely mentions.
+
+Brazil's average diagnostic odyssey is **5-7 years**. Most patients enter via UBS (primary care). [BMC](https://link.springer.com/article/10.1186/s12875-024-02553-8) shows rural UBS doctors are mostly recent graduates with no integrated information system. [Casa dos Raros](https://pmc.ncbi.nlm.nih.gov/articles/PMC12321710/) validated that the right intervention target is **the local clinician**, not the patient.
+
+After my own diagnosis I founded **Raras** — because I had lived the inside of the problem long enough to know what was missing: not more frontier AI, but the *right* knowledge delivered at the right moment to the right professional.
 
 Frontier LLMs in English know Gaucher exists. They don't know Brazil's PCDT lists imiglucerase/alfa-velaglicerase/alfa-taliglicerase as CEAF options, that the Portaria was amended twice, or that dispensing happens at 31 specific centers — exactly what a primary-care doctor needs to refer correctly. **Araras is a decision-support copilot for that doctor** — opens during the consultation, queries with the case, informs the next decision (referral, exam, family conversation).
 
@@ -141,6 +155,12 @@ What's not new (honesty): Gemma 4 architecture, Unsloth recipe, HPO ontology, pu
 
 ## The 20-year part
 
-Symptoms at 7. Diagnosed at 27. The information existed the whole time — locked behind English-language literature and a healthcare system that didn't talk to itself. Araras is what I wish someone had handed the seven doctors who saw me. It's open. Take it. Make it better.
+Symptoms at 7. Diagnosed at 27. **Distonia mioclônica (ORPHA:36899)** — a movement disorder so rare that none of the seven neurologists I saw before age 27 had ever managed a case. The information existed the whole time — locked behind English-language literature, paywalled journals, and a healthcare system that didn't talk to itself.
 
-— Dimas, paciente raro
+I built Raras after my diagnosis because the inside view of the problem was unmistakable: **the bottleneck isn't a smarter AI — it's the right knowledge in the hands of the local clinician, in their language, in their workflow, in their consultation room.**
+
+The Brazilian rare-disease patient pays the cost of that bottleneck in years of life. Araras-Gemma4 is one piece of the answer — a 4B-parameter model in the pocket of the doctor, with **76.8% Track B accuracy** on actual Brazilian SUS dispensation patterns, runnable on a phone, fully Apache 2.0.
+
+Araras is what I wish someone had handed the seven doctors who saw me before age 27. It's open. Take it. Make it better.
+
+— **Dimas Timmers**, founder of [Raras.org](https://raras.org), paciente raro (distonia mioclônica)
