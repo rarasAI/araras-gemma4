@@ -48,40 +48,50 @@ araras-gemma4/
 | 🤗 **HPO matcher PT-BR** | [Raras-AI/araras-hpo-brasil](https://huggingface.co/Raras-AI/araras-hpo-brasil) | "amarelão" → HP:0000952 |
 | 🤗 **Benchmark dataset** | [Raras-AI/RareBench-BR-Public](https://huggingface.co/datasets/Raras-AI/RareBench-BR-Public) | 833 validated SUS-grounded cases |
 
-## End-to-end pipeline
+## End-to-end pipeline (the 76.8% Track B number is from this full chain)
 
 ```
 PT-BR free text (laudo, prontuário, transcription)
     ↓
-[1] araras-hpo-brasil INT8 (85 MB) — normalize regional/lay PT-BR → HPO codes
+[1] 🧬 araras-hpo-brasil (BioLORD-2023 fine-tune for PT-BR, ~85-340 MB)
+       normalizes regional/lay language → HP:XXXXXXX codes
+       "amarelão" → HP:0000952  ·  "bebê molinho" → HP:0001252
     ↓
-[2] araras-gemma4-e4b Q4_K_M (5.3 GB) via llama.cpp Metal/CUDA/Vulkan
+[2] 🧠 araras-gemma4-e4b Q4_K_M (5.3 GB) via llama.cpp Metal/CUDA/Vulkan
+       generates TOP-5 ranked differential diagnoses with reasoning
     ↓
-[3] Canonical ORPHA lookup — fixes LLM sparse-token hallucination
+[3] ✅ Hybrid canonical ORPHA resolver:
+       Tier 1 — strict substring match on 10,468-keyword dict (~30ms)
+       Tier 2 — BioLORD semantic fallback @ 0.78 threshold (~50ms, only if Tier 1 fails)
+       Returns None (honest abstention) if neither tier matches confidently
     ↓
-[4] PCDT overlay (24 MS PCDTs structured) — CEAF medication + reference center
+[4] 📋 PCDT overlay (24 official Conitec protocols, structured JSON)
+       ORPHA → PCDT slug + gov.br URL + ICD-10 + CEAF medication + reference center
     ↓
-Output: Dx + evidence + SUS conduta + cost prior + nearest center
+Output: structured clinical decision support — differentials + PCDT + SUS conduta + centro
 ```
 
-Total stack: **5.5 GB**. Runs offline on iPhone, Android, laptop.
+Total stack: **5.5 GB**. Runs offline on iPhone, Android, laptop. Zero cloud calls. Zero LGPD risk.
 
 ## Results
 
-**RareBench-BR L5_realsus (240 cases, full L5 layer):**
+**Full unified RareBench-BR_SUS (833 cases, 0 errors):**
 
-| Metric | Araras-Gemma4 (Q4_K_M offline 4.5B) | DeepSeek V4 Chat (cloud ~600B) |
+| Metric | Araras-Gemma4 (Q4_K_M offline 4.5B) | DeepSeek V4 Chat (cloud ~600B, 36-case subsample) |
 |---|---:|---:|
-| R@1 (clinical name match) | **70.4%** | 86.1% (36 sub.) |
-| R@3 | **78.3%** | 91.7% |
-| **Track B PCDT-correct** | **76.3%** | 91.7% |
+| R@1 (clinical name match) | **41.2%** | 86.1% (36 sub.) |
+| R@3 | **47.1%** | 91.7% |
+| **🔥 Track B PCDT-correct** | **76.8%** (331/431) | 91.7% (33/36) |
+| Errors | **0** | n/a |
 | Latency p50 | 6.5s | 4.1s |
 | Cost per query | **$0 (local)** | ~$0.001 |
 | Footprint | 5.5 GB | data center |
 
-**A 4B open model running offline matches the trajectory of a 150× larger cloud model on Brazilian SUS-grounded benchmark.**
+**Per-layer R@1:** L3_v2 atypical = 27.4% · L4 hard BR = 17.7% · **L5_v2 SUS-grounded = 47.2%** · L5_realsus standalone (240 cases) = **70.4%**
 
-vs. our prior Qwen3.5-9B baseline on L1 (16.6% R@1, 64s): Araras is **4× more accurate, 9× faster, smaller**.
+**Why Track B 76.8% is the headline:** for 3 of every 4 cases where the gold has a CEAF medication, Araras recommends the exact molecule SUS dispenses. No other open model is measured on this axis — because no other open model was trained on Brazilian SUS-grounded data.
+
+vs. our prior Qwen3.5-9B baseline on L1 (16.6% R@1, 64s): Araras is **2.5× more accurate, 9× faster, smaller**.
 
 ## Quick start
 
