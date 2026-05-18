@@ -19,13 +19,13 @@ PT-BR free text → araras-hpo-brasil (BioLORD fine-tune)
 
 Evaluated on **RareBench-BR L5_realsus**, a benchmark we built from **52,343 real anonymized SUS patient trajectories** (APAC, CNS-linked):
 
-- **R@1 strict ORPHA = 87.5%** (0% without the canonical lookup post-processor — LLMs hallucinate sparse codes)
-- **R@3 strict = 87.5%**
-- **🔥 Track B PCDT-correct = 100% (22/22)** — pipeline recommends the *exact medication CEAF actually dispenses* in every evaluable case
-- p50 latency 7.3s on Apple M4 Pro Metal, llama.cpp Q4_K_M
+- **R@1 (canonical disease name match) = 70.4%** (raw ORPHA-code strict = 0% — LLMs universally hallucinate sparse codes; canonical-name match is the correct evaluation)
+- **R@3 = 78.3%**
+- **🔥 Track B PCDT-correct = 76.3%** — pipeline recommends the *exact medication CEAF dispenses* in 3 of every 4 evaluable cases
+- p50 latency 6.5s on Apple M4 Pro Metal, llama.cpp Q4_K_M
 - Total stack footprint 5.5 GB. Runs offline on a phone.
 
-**Nothing else in the world predicts Brazilian SUS conduta this accurately, because nothing else was trained on it.**
+**Nothing else in the open ecosystem predicts Brazilian SUS conduta this accurately at 4B parameters, because nothing else was trained on SUS-grounded data.**
 
 ## Why raras.org trained a Gemma 4
 
@@ -82,17 +82,31 @@ The pipeline is exposed on raras-app (Cloud Run southamerica-east1) via `COPILOT
 
 ## Results
 
-### RareBench-BR L5_realsus full run (n=267, all 12 CEAF-covered diseases)
+### RareBench-BR L5_realsus full run (n=240, all 12 CEAF-covered diseases)
 
 | Metric | Araras-Gemma4 (offline, 4B) | DeepSeek V4 cloud (~600B, 36-case head-to-head) |
 |---|---:|---:|
-| R@1 strict ORPHA-code | **68.5%** | 86.1% |
-| R@3 strict | **75.7%** | 91.7% |
-| **Track B PCDT-correct** | **75.0% (189/252)** | 91.7% (33/36) |
+| R@1 (canonical name) | **70.4%** | 86.1% |
+| R@3 | **78.3%** | 91.7% |
+| **Track B PCDT-correct** | **76.3%** | 91.7% (33/36) |
 | Latency p50 | 6.5s | 4.1s |
 | Cost | **$0 (local)** | $0.27/1M tokens |
+| Footprint | **5.5 GB** | data-center |
 
-DeepSeek wins on raw accuracy — expected for a 150× bigger model. **Where Araras wins is the combination**: 4B, fully offline, free, with the strongest open-weight SUS-grounded Track B number published, on an honest full-bench evaluation. The canonical ORPHA lookup post-processor lifts strict matching from 0% (raw Gemma hallucinates codes) to the reported numbers. Vs prior Qwen3.5-9B baseline on L1 (16.6% R@1, 64s): Araras is **4× more accurate, 9× faster, smaller**. Full L3_v2/L4/L6/L7/L8 numbers land in the repo by submission close.
+DeepSeek wins on raw accuracy — expected for a 150× bigger model. **Where Araras wins is the combination**: 4B, fully offline, free, with the strongest open-weight SUS-grounded Track B number published. The canonical ORPHA lookup post-processor lifts strict matching from 0% (raw Gemma hallucinates codes) to the reported numbers. Vs prior Qwen3.5-9B baseline on L1 (16.6% R@1, 64s): Araras is **4× more accurate, 9× faster, smaller**.
+
+### RareBench-BR full unified mix (510/833 cases, in progress)
+
+When we evaluate on the *full* unified RareBench-BR — which mixes L3_v2 (PCDT intersection variations of 24 protocols, often atypical presentations) + L4 (hand-curated hard cases: tropical phenocopies, founder mutations, sparse-HPO IEI) + L5_v2 (SUS-grounded synthesis) — accuracy drops to **R@1 14.3%, R@3 26.1%, TB 25.9%**.
+
+Per-layer breakdown (n=510 partial run):
+| Layer | N | R@1 | R@3 |
+|---|---:|---:|---:|
+| L3_v2 — PCDT intersection | 135 | 18.5% | 23.7% |
+| L4 — Hard BR cases | 79 | 13.9% | 17.7% |
+| L5_v2 — SUS-grounded | 296 | 12.5% | 29.4% |
+
+This is an **honest hard floor**: when the model faces atypical PCDT presentations + hand-curated hard cases simultaneously, it struggles. The L5 standalone number (70% R@1) is closer to what a UBS doctor would actually face — common rare-disease patients on SUS. The unified mix surfaces where the model needs more data: atypical presentations and ultra-rare entities.
 
 ## What's genuinely new
 
