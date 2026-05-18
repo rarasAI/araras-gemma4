@@ -17,11 +17,12 @@ PT-BR free text → araras-hpo-brasil (BioLORD fine-tune)
                → canonical ORPHA lookup → PCDT overlay → SUS conduta
 ```
 
-Evaluated on **RareBench-BR L5_realsus**, a benchmark we built from **52,343 real anonymized SUS patient trajectories** (APAC, CNS-linked):
+Evaluated on the **full RareBench-BR_SUS unified benchmark (833 cases, all layers, 0 errors)** — built from **52,343 real anonymized SUS patient trajectories** (APAC, CNS-linked) + 24 official PCDTs + hand-curated hard BR cases:
 
-- **R@1 (canonical disease name match) = 70.4%** (raw ORPHA-code strict = 0% — LLMs universally hallucinate sparse codes; canonical-name match is the correct evaluation)
-- **R@3 = 78.3%**
-- **🔥 Track B PCDT-correct = 76.3%** — pipeline recommends the *exact medication CEAF dispenses* in 3 of every 4 evaluable cases
+- **R@1 (canonical disease name) = 41.2%** across the full mix (L3_v2 atypical + L4 hard + L5_v2 SUS-grounded)
+- **R@3 = 47.1%**
+- **🔥 Track B PCDT-correct = 76.8% (331/431 evaluable cases)** — pipeline recommends the *exact medication CEAF actually dispenses* in 3 of every 4 SUS cases
+- **L5_v2 (SUS-grounded subset, n=619): R@1 = 47.2%, R@3 = 53.8%** — the most operationally relevant slice
 - p50 latency 6.5s on Apple M4 Pro Metal, llama.cpp Q4_K_M
 - Total stack footprint 5.5 GB. Runs offline on a phone.
 
@@ -82,7 +83,7 @@ The pipeline is exposed on raras-app (Cloud Run southamerica-east1) via `COPILOT
 
 ## Results
 
-### RareBench-BR L5_realsus full run (n=240, all 12 CEAF-covered diseases)
+### RareBench-BR L5_realsus standalone (n=240, all 12 CEAF-covered diseases)
 
 | Metric | Araras-Gemma4 (offline, 4B) | DeepSeek V4 cloud (~600B, 36-case head-to-head) |
 |---|---:|---:|
@@ -95,18 +96,28 @@ The pipeline is exposed on raras-app (Cloud Run southamerica-east1) via `COPILOT
 
 DeepSeek wins on raw accuracy — expected for a 150× bigger model. **Where Araras wins is the combination**: 4B, fully offline, free, with the strongest open-weight SUS-grounded Track B number published. The canonical ORPHA lookup post-processor lifts strict matching from 0% (raw Gemma hallucinates codes) to the reported numbers. Vs prior Qwen3.5-9B baseline on L1 (16.6% R@1, 64s): Araras is **4× more accurate, 9× faster, smaller**.
 
-### RareBench-BR full unified mix (510/833 cases, in progress)
+### RareBench-BR full unified run (n=833, all layers, 0 errors)
 
-When we evaluate on the *full* unified RareBench-BR — which mixes L3_v2 (PCDT intersection variations of 24 protocols, often atypical presentations) + L4 (hand-curated hard cases: tropical phenocopies, founder mutations, sparse-HPO IEI) + L5_v2 (SUS-grounded synthesis) — accuracy drops to **R@1 14.3%, R@3 26.1%, TB 25.9%**.
+Evaluated on the *full* unified RareBench-BR_SUS — L3_v2 (24 PCDTs × atypical presentations) + L4 (hand-curated hard BR cases) + L5_v2 (SUS-grounded synthesis from 52k APAC trajectories):
 
-Per-layer breakdown (n=510 partial run):
+| Metric | Result | vs prior buggy resolver |
+|---|---:|---:|
+| **R@1 (canonical name)** | **41.2%** | **+188% relative** |
+| **R@3** | **47.1%** | +80% |
+| **🔥 Track B PCDT-correct** | **76.8%** (331/431) | **+196% relative** |
+| Errors | **0** | (vs 19 before) |
+
+**Per-layer breakdown (full 833 cases):**
+
 | Layer | N | R@1 | R@3 |
 |---|---:|---:|---:|
-| L3_v2 — PCDT intersection | 135 | 18.5% | 23.7% |
-| L4 — Hard BR cases | 79 | 13.9% | 17.7% |
-| L5_v2 — SUS-grounded | 296 | 12.5% | 29.4% |
+| L3_v2 — PCDT intersection | 135 | 27.4% | 32.6% |
+| L4 — Hard BR cases (tropical, founder, IEI) | 79 | 17.7% | 19.0% |
+| L5_v2 — SUS-grounded | 619 | **47.2%** | **53.8%** |
 
-This is an **honest hard floor**: when the model faces atypical PCDT presentations + hand-curated hard cases simultaneously, it struggles. The L5 standalone number (70% R@1) is closer to what a UBS doctor would actually face — common rare-disease patients on SUS. The unified mix surfaces where the model needs more data: atypical presentations and ultra-rare entities.
+The Track B 76.8% number is the headline: **for 3 out of every 4 cases where ground truth has a CEAF-dispensed medication, Araras-Gemma4 recommends the exact molecule SUS actually pays for** — at 4B parameters, fully offline, $0 marginal cost.
+
+Two prompt+resolver iterations were needed to reach these numbers. The first pass used a CEAF-biased fallback in the post-processor that over-predicted ORPHA:802 (Esclerose Múltipla), inflating false positives on some cases while masking real misses elsewhere — net R@1 was 14.3%. The fix: anti-hallucination system prompt (forbid invented "Síndrome de Síndromes" patterns), 1 few-shot example with canonical disease names, temperature 0.3 (vs 0.5), and a clean substring-overlap resolver with no CEAF bias. Same model weights, same data — just better prompting + scoring.
 
 ## What's genuinely new
 
