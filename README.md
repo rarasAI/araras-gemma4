@@ -29,9 +29,6 @@ Built **by** a Brazilian rare-disease patient (Dimas — distonia mioclônica, 2
 ```
 araras-gemma4/
 ├── README.md              # this file
-├── WRITEUP.md             # full hackathon writeup (1500 words)
-├── MODEL_CARD.md          # detailed model card (also on HF)
-├── kaggle_notebook.ipynb  # runnable demo notebook
 ├── pipeline/              # end-to-end pipeline: HPO → Gemma → ORPHA → PCDT
 │   ├── __init__.py
 │   └── araras_pipeline.py
@@ -129,7 +126,7 @@ Positioned as **Software de Apoio à Decisão Clínica** (SaMD) under **ANVISA R
 - **Compute**: A100 80GB on Vertex AI, ~2h, ~$25
 - **Native Gemma 4 features**: `<|channel>thought` blocks, 128K context, system role
 
-Full training details in [MODEL_CARD.md](MODEL_CARD.md) and [WRITEUP.md](WRITEUP.md).
+Full training details in the [HF Model Card](https://huggingface.co/Raras-AI/araras-gemma4-e4b-v4-sota).
 
 ## Acknowledgments
 
